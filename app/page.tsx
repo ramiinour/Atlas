@@ -4,15 +4,44 @@ import Image from "next/image";
 import { SettingsIcon } from "lucide-react";
 import Messages from "@/components/Messages";
 import Recorder from "@/components/Recorder";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mimeType } from "@/components/Recorder";
+import { useFormState } from "react-dom";
+import transcripe from "@/actions/transcripe";
+
+const initialState = {
+  sender: "",
+  response:"",
+  id:""
+}
+
+export type Message = {
+  sender:string;
+  response:string;
+  id:string;
+}
 
 export default function Home() {
   const fileRef = useRef<HTMLInputElement | null>(null)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const [state,formAction] = useFormState(transcripe,initialState)
+  const [messages,setMessages] = useState<Message[]>([])
+
+  // this will be responsible for updating the messages after the server action
+  useEffect(()=>{
+  if(state.response && state.sender) {
+    setMessages(messages=> [{
+      sender: state.sender || "",
+      response:state.response || "",
+      id: state.id || ""
+    },...messages])
+  }
+
+  },[state])
 
   const uploadAudio = (blob:Blob)=>{
   const file = new File([blob],"audio.webm", {type:mimeType})
+  console.log(file);
 
   // now we set the file as the value of the hidden input field
   if(fileRef.current) {
@@ -26,6 +55,9 @@ export default function Home() {
     }
   }
   }
+
+  console.log(messages);
+
   return (
     <main className="bg-black h-screen overflow-y-auto">
      {/* header */}
@@ -40,7 +72,7 @@ export default function Home() {
      </header>
 
      {/* form  */}
-     <form className="flex flex-col bg-black">
+     <form action={formAction} className="flex flex-col bg-black">
       <div className="flex-1 bg-gradient-to-b from-purple-500 to-black">
         <Messages/>
       </div>
